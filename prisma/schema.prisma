@@ -1,0 +1,120 @@
+// Prisma schema for Stellar InvoiceGen
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  walletAddress String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  invoices      Invoice[]
+
+  @@map("users")
+}
+
+// ─── Invoice ──────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  title         String
+  description   String?
+  status        InvoiceStatus @default(PENDING)
+  currency      Currency      @default(USDC)
+
+  // Financial
+  subtotal      Float
+  tax           Float         @default(0)
+  total         Float
+
+  // Dates
+  dueDate       DateTime
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Parties
+  freelancerName   String
+  freelancerEmail  String
+  freelancerWallet String
+  clientName       String
+  clientEmail      String
+  clientWallet     String?
+
+  // Stellar
+  stellarTxHash    String?
+  contractInvoiceId String?
+
+  // Relations
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+  payments      Payment[]
+
+  @@map("invoices")
+}
+
+// ─── Invoice Item ─────────────────────────────────────────────────────────────
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id          String        @id @default(uuid())
+  txHash      String        @unique
+  amount      Float
+  currency    Currency
+  status      PaymentStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+
+  invoiceId   String
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum Currency {
+  XLM
+  USDC
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
