@@ -1,0 +1,26 @@
+name: Feature Request
+description: Suggest a new endpoint or backend feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed API design
+      description: Endpoint, method, request body, response shape
+      placeholder: |
+        GET /api/invoices/:id/payments
+        Response: { success: true, data: Payment[] }
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
