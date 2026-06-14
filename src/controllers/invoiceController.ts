@@ -195,6 +195,7 @@ export async function deleteInvoice(req: AuthRequest, res: Response, next: NextF
 
     if (!existing) throw new AppError("Invoice not found", 404);
     if (existing.userId !== req.userId) throw new AppError("Forbidden", 403);
+    if (existing.status === "PAID") throw new AppError("Cannot delete a paid invoice", 400);
 
     await prisma.invoice.delete({ where: { id: req.params.id } });
 
