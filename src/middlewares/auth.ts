@@ -5,6 +5,9 @@ import { AppError } from "./errorHandler";
 export interface AuthRequest extends Request {
   userId?: string;
   walletAddress?: string;
+  params: Record<string, string>;
+  query: Record<string, string>;
+  body: unknown;
 }
 
 /**
