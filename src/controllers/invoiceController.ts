@@ -15,6 +15,23 @@ const itemSchema = z.object({
   total: z.number().positive(),
 });
 
+const updateInvoiceSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  currency: z.enum(["XLM", "USDC"]).optional(),
+  dueDate: z.string().datetime().or(z.string().min(1)).optional(),
+  clientName: z.string().min(1).optional(),
+  clientEmail: z.string().email().optional(),
+  clientWallet: z.string().optional(),
+  freelancerName: z.string().min(1).optional(),
+  freelancerEmail: z.string().email().optional(),
+  freelancerWallet: z.string().min(1).optional(),
+  items: z.array(itemSchema).min(1).optional(),
+  subtotal: z.number().nonnegative().optional(),
+  tax: z.number().nonnegative().optional(),
+  total: z.number().positive().optional(),
+});
+
 const createInvoiceSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -140,7 +157,12 @@ export async function updateInvoice(req: AuthRequest, res: Response, next: NextF
     if (existing.userId !== req.userId) throw new AppError("Forbidden", 403);
     if (existing.status === "PAID") throw new AppError("Cannot edit a paid invoice", 400);
 
-    const { items, ...updateData } = req.body;
+    const parsed = updateInvoiceSchema.safeParse(req.body);
+    if (!parsed.success) {
+      throw new AppError(`Validation error: ${parsed.error.errors[0].message}`, 400);
+    }
+
+    const { items, ...updateData } = parsed.data;
 
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
