@@ -90,6 +90,7 @@ export async function getInvoices(req: AuthRequest, res: Response, next: NextFun
 /**
  * GET /api/invoices/:id
  * Returns a single invoice by ID. Public endpoint — no auth required.
+ * Payment records are omitted for non-owners to avoid leaking sensitive tx data.
  */
 export async function getInvoiceById(req: AuthRequest, res: Response, next: NextFunction) {
   try {
@@ -100,7 +101,11 @@ export async function getInvoiceById(req: AuthRequest, res: Response, next: Next
 
     if (!invoice) throw new AppError("Invoice not found", 404);
 
-    res.json({ success: true, data: invoice });
+    // Strip payment details for non-owners (public shareable view)
+    const isOwner = req.userId && req.userId === invoice.userId;
+    const data = isOwner ? invoice : { ...invoice, payments: undefined };
+
+    res.json({ success: true, data });
   } catch (err) {
     next(err);
   }
@@ -211,7 +216,7 @@ export async function deleteInvoice(req: AuthRequest, res: Response, next: NextF
  */
 export async function verifyPayment(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { txHash } = req.body;
+    const { txHash } = req.body as { txHash?: unknown };
     if (!txHash || typeof txHash !== "string") {
       throw new AppError("txHash is required", 400);
     }
