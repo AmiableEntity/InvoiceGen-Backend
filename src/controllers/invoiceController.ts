@@ -119,10 +119,8 @@ export async function createInvoice(req: AuthRequest, res: Response, next: NextF
 
     const { items, ...invoiceData } = parsed.data;
 
-    // Generate a unique invoice number
-    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0")}`;
+    // Generate a unique invoice number using a random UUID segment
+    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}-${uuidv4().split("-")[0].toUpperCase()}`;
 
     const invoice = await prisma.invoice.create({
       data: {
