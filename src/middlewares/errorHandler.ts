@@ -20,7 +20,11 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  console.error("❌ Error:", err.message);
+  if (process.env.NODE_ENV !== "production") {
+    console.error("❌ Error:", err.stack ?? err.message);
+  } else {
+    console.error("❌ Error:", err.message);
+  }
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
